@@ -1,0 +1,28 @@
+[% WRAP file.tt %]
+
+  [%# This is a comment %]
+
+  This is some text.  Blah, blah, blah.
+
+  [% IF something IS true %]
+     [% WHILE foo = bar %]
+	Foo is still bar.
+     [% END %]
+  [% ELSIF something IS false %]
+     Something is false.
+  [% ELSE %]
+     Tristate!     
+  [% END %]
+
+  [% LOOP OVER foo AS bar %]
+     This is [% bar %] inside [% foo %].
+  [% END %]
+
+  Let's also try a filter.
+  [% foo %]          <-- No filter
+  [% foo | filter %] <-- One filter
+  [% foo | filter | filter2 | foo_bar %] <-- three filters
+
+  We're done.
+
+[% END %]

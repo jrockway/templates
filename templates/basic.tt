@@ -1,0 +1,7 @@
+This is plain text.
+
+Now we have a [% variable %].
+
+The syntax look like this: \[% DIRECTIVE options \%].
+
+Done.
