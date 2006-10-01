@@ -14,7 +14,8 @@
 \[%		         BEGIN(command);
 <command>END             TT_TOK(END_TOK);
 <command>[A-Z]+		 STR; TT_TOK(DIRECTIVE); /* possible command */
-<command>[^%[:space:]]+  STR; TT_TOK(IDENTIFIER);
+<command>[A-Za-z0-9_]+   STR; TT_TOK(IDENTIFIER);
+<command>\|              TT_TOK(FILTER_OP);
 <command>%\]		 BEGIN(0);
 
 %%

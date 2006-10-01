@@ -1,44 +1,58 @@
 %{
 #include <stdio.h>
 #include "tree.h"
-t_tree root; /* parse tree */
-root.operation = "ROOT";
+#include "directives.h"
+  
+tree_t *root;
+ 
 %}
+%union {
+   operation_t *op;
+   tree_t *tree;
+   char *string;
+};
 
+%token <string> LIT_OPEN;
+%token <string> DIRECTIVE;
+%token <string> IDENTIFIER;
+%token <string> DATA;
+%token <string> END_TOK;
+%token FILTER_OP;
+%type <tree> filter 
+%type <tree> literal
+%type <tree> command
+%type <tree> commands
 %%
-%token LIT_OPEN;
-%token DIRECTIVE;
-%token IDENTIFIER;
-%token DATA;
-%token END_TOK;
 
-program: | program statement;
-statement: block 
-	
-	 ;
+commands: /* empty */
+	| commands command    { add_op($2, $1); root = $1; $$ = $1; }
 
-block: command literal end { printf("BLOCK\n"); }
-     | command { printf("FAKE BLOCK\n"); }
-     ;	    
-command: filter 
-       | IDENTIFIER { $$ = printf("IDENTIFIER\n"); } 
-       | DIRECTIVE { $$ = printf("DIRECTIVE\n"); }
-       | DIRECTIVE IDENTIFIER { $$ = printf("DIRECTIVE ON IDENTIFIER\n"); }
+command: literal              { $$ = $1; }
+       | filter 	      { $$ = $1; }
+       | IDENTIFIER           { $$ = bare_identifier($1) }
        ;
-filter: IDENTIFIER '|' DATA { printf("Hey, a filter!\n") }
+filter: IDENTIFIER FILTER_OP IDENTIFIER /* plain [% something | filter %] */
+	{ $$ = identifier_filter($1, $3); }
       ;
-end: DIRECTIVE END_TOK { $$ = printf("END BLOCK\n"); }
-   ;
 
-literal: LIT_OPEN | DATA { $$ = $1 };
+literal:      /* literal [% */
+	  LIT_OPEN { $$ = optree(op_string(OP_LITECHO, "[%")); };
+              /* text to echo */
+	| DATA     { $$ = optree(op_string(OP_LITECHO, $1));   };
 
 %%
 
 int main (int argc, char **argv)
 {
-  yydebug = 1;
+  root = malloc(sizeof(struct tree_t));
+  if(root == 0){
+     fprintf(stderr, "Couldn't malloc memory for the parsetree.\n");
+     exit(1);
+  }
+  yydebug = 0;
   printf("Starting...\n");
   yyparse();
+  dumptree(root, 0);			
 }
 
 int yyerror(char *error)
