@@ -7,7 +7,7 @@ template.tab.c: template.y tree.h
 	bison -t -d template.y --verbose
 
 lex.yy.c: template.l y.tab.h
-	flex -d -v template.l
+	flex -d -f -v template.l
 
 tree.o: tree.c tree.h
 	cc -c tree.c -o tree.o -g3

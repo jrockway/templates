@@ -1,7 +1,31 @@
 #include "tree.h"
 #include "directives.h"
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
+
+/* non-block directives that accept an identifier:
+   INCLUDE filtename
+*/
+tree_t *identifier_directive(char *directive, char *identifier)
+{
+  argument_t *idf = malloc(sizeof(argument_t));
+  idf->data.STRING = strdup(identifier);
+  idf->type = T_STRING;
+
+  operation_t *op = malloc(sizeof(argument_t));
+  op->opcode = OP_INCLUDE;
+  op->arguments = idf;
+
+  if(strcmp(directive, "INCLUDE") != 0)
+    {
+      printf("error: unknown directive %s\n", directive);
+      exit(1);
+    }
+  
+  return optree(op);
+}
+
 
 tree_t *identifier_filter(char *identifier, char *filter)
 {
