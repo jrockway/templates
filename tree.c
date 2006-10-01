@@ -66,7 +66,7 @@ void dumptree (tree_t *tree, int level)
       argument = op->arguments;
       while(argument != NULL){
 	if(argument->type == T_STRING){
-	  printf("%s ARG: <STRING>%s\n", indent, argument->data.STRING);
+	  printf("%s ARG: <STRING> ``%s''\n", indent, argument->data.STRING);
 	}
 	else if(argument->type == T_INT){
 	  printf("%s ARG: <INT>%d\n", indent, argument->data.INT);

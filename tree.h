@@ -35,7 +35,7 @@ typedef struct operation_t operation_t;
 #define OP_NOP 0        /* no operation ? */
 #define OP_GET 1        /* get something from the stash, return to parent */
 #define OP_SET 2        /* set stash entry from child's return */
-#define OP_ECHO 3       /* echo some literal text (child or arg) */
+#define OP_ECHO 3       /* echo some text (child or arg if !child) */
 #define OP_LOOP 5       /* loop over child until alter is false */ 
 #define OP_BRANCH 6     /* test and execute child if true, alter otherwise */
 #define OP_INCLUDE 7    /* include argument (filename) into the optree */

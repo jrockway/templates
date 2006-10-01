@@ -17,6 +17,7 @@ tree_t *root;
 %token <string> IDENTIFIER;
 %token <string> DATA;
 %token <string> END_TOK;
+%token COMMAND; /* indicates start of command */
 %token FILTER_OP;
 %type <tree> filter 
 %type <tree> literal
@@ -25,18 +26,27 @@ tree_t *root;
 %%
 
 commands:		      {  }
-	| commands command    { $1; add_op(root, $2) }
-
-command: literal              { $$ = $1; }
-       | filter 	      { $$ = $1; }
-       | IDENTIFIER           { $$ = bare_identifier($1) }
+        | commands command END_TOK
+			      { $$ = NULL; printf("BLOCK!\n"); }
+	| commands command    { $1; if($2 != NULL) add_op(root, $2) }
+        ;
+			   
+command: literal              { /* echo is added in literal rule */ }
+       | filter 	      { $$ = echo_tree($1); }
+       | COMMAND IDENTIFIER           { $$ = bare_identifier($2) }
+       | COMMAND DIRECTIVE IDENTIFIER { $$ = NULL; printf("\n* dir ident\n") }
+       | COMMAND DIRECTIVE            { $$ = NULL; printf("directive\n") }
        ;
-filter: IDENTIFIER FILTER_OP IDENTIFIER /* plain [% something | filter %] */
-	{ $$ = identifier_filter($1, $3); }
+
+filter: COMMAND IDENTIFIER FILTER_OP IDENTIFIER 
+			      /* plain [% something | filter %] */
+		   	      { $$ = identifier_filter($2, $4); }
+      | filter FILTER_OP IDENTIFIER /* chained filters */
+               		      { $$ = chained_filter($1, $3); }
       ;
 
-literal: DATA		       { $$ = optree(op_string(OP_ECHO, $1));};
-	
+literal: DATA		      { $$ = optree(op_string(OP_ECHO, $1));};
+
 %%
 
 int main (int argc, char **argv)

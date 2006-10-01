@@ -5,7 +5,6 @@
 
 tree_t *identifier_filter(char *identifier, char *filter)
 {
-  
   argument_t *fname = malloc(sizeof(argument_t));
   fname->data.STRING = strdup(filter);
   fname->type = T_STRING;
@@ -27,6 +26,22 @@ tree_t *identifier_filter(char *identifier, char *filter)
   return ftree;
 }
 
+tree_t *chained_filter(tree_t *child_filter, char *filter)
+{
+  argument_t *fname = malloc(sizeof(argument_t));
+  fname->data.STRING = strdup(filter);
+  fname->type = T_STRING;
+
+  operation_t *fo = malloc(sizeof(operation_t));
+  fo->opcode = OP_FILTER;
+  fo->arguments = fname;
+
+  tree_t *ftree = optree(fo);
+  ftree->child  = child_filter;
+  return ftree;
+}
+
+
 tree_t *bare_identifier(char *identifier)
 {
   argument_t *f = malloc(sizeof(argument_t));
@@ -44,5 +59,17 @@ tree_t *bare_identifier(char *identifier)
   tree_t *echotree = optree(echo);
   echotree->child = optree(get);
   return echotree;
+}
+
+tree_t *echo_tree(tree_t *tree)
+{
+  operation_t *op = malloc(sizeof(operation_t));
+  op->opcode = OP_ECHO;
+  op->arguments = NULL;
+
+  tree_t *new_tree = optree(op);
+  new_tree->child = tree;
+  
+  return new_tree;
 }
 
