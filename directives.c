@@ -1,31 +1,48 @@
 #include "tree.h"
 #include "directives.h"
+#include <stdlib.h>
+#include <string.h>
 
-struct tree_t *identifier_filter(char *identifier, char *filter)
+tree_t *identifier_filter(char *identifier, char *filter)
 {
-  struct argument_t *f = malloc(sizeof(struct argument_t));
-  f->data.STRING = strdup(identifier);
-  f->type = T_STRING;
-  struct argument_t *d = malloc(sizeof(struct argument_t));
-  d->data.STRING = strdup(filter);
-  d->type = T_STRING;
-  f->next = d;
-  struct operation_t *o = malloc(sizeof(struct operation_t));
-  o->opcode = OP_FILTER;
-  o->arguments = f;
-  dumptree(optree(o), 0); /* print tree */
-  return optree(o);
+  
+  argument_t *fname = malloc(sizeof(argument_t));
+  fname->data.STRING = strdup(filter);
+  fname->type = T_STRING;
+
+  argument_t *iname = malloc(sizeof(argument_t));
+  iname->data.STRING = strdup(identifier);
+  iname->type = T_STRING;
+  
+  operation_t *get = malloc(sizeof(argument_t));
+  get->opcode = OP_GET;
+  get->arguments = iname;
+
+  operation_t *fo = malloc(sizeof(operation_t));
+  fo->opcode = OP_FILTER;
+  fo->arguments = fname;
+
+  tree_t *ftree = optree(fo);
+  ftree->child  = optree(get);
+  return ftree;
 }
 
-struct tree_t *bare_identifier(char *identifier)
+tree_t *bare_identifier(char *identifier)
 {
-  struct argument_t *f = malloc(sizeof(struct argument_t));
+  argument_t *f = malloc(sizeof(argument_t));
   f->data.STRING = identifier;
   f->type = T_STRING;
-  struct operation_t *o = malloc(sizeof(struct operation_t));
-  o->opcode = OP_GETECHO;
-  o->arguments = f;
-  dumptree(optree(o), 0); /* print */
-  return optree(o);
+
+  operation_t *get = malloc(sizeof(operation_t));
+  get->opcode = OP_GET;
+  get->arguments = f;
+  
+  operation_t *echo = malloc(sizeof(operation_t));
+  echo->opcode = OP_ECHO;
+  echo->arguments = NULL;
+  
+  tree_t *echotree = optree(echo);
+  echotree->child = optree(get);
+  return echotree;
 }
 

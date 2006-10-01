@@ -1,18 +1,18 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include "tree.h"
 #include "directives.h"
   
 tree_t *root;
- 
 %}
+
 %union {
-   operation_t *op;
-   tree_t *tree;
+   struct operation_t *op;
+   struct tree_t *tree;
    char *string;
 };
 
-%token <string> LIT_OPEN;
 %token <string> DIRECTIVE;
 %token <string> IDENTIFIER;
 %token <string> DATA;
@@ -24,8 +24,8 @@ tree_t *root;
 %type <tree> commands
 %%
 
-commands: /* empty */
-	| commands command    { add_op($2, $1); root = $1; $$ = $1; }
+commands:		      {  }
+	| commands command    { $1; add_op(root, $2) }
 
 command: literal              { $$ = $1; }
        | filter 	      { $$ = $1; }
@@ -35,24 +35,31 @@ filter: IDENTIFIER FILTER_OP IDENTIFIER /* plain [% something | filter %] */
 	{ $$ = identifier_filter($1, $3); }
       ;
 
-literal:      /* literal [% */
-	  LIT_OPEN { $$ = optree(op_string(OP_LITECHO, "[%")); };
-              /* text to echo */
-	| DATA     { $$ = optree(op_string(OP_LITECHO, $1));   };
-
+literal: DATA		       { $$ = optree(op_string(OP_ECHO, $1));};
+	
 %%
 
 int main (int argc, char **argv)
 {
-  root = malloc(sizeof(struct tree_t));
-  if(root == 0){
-     fprintf(stderr, "Couldn't malloc memory for the parsetree.\n");
+  operation_t *start = malloc(sizeof(operation_t));
+  argument_t *filename = malloc(sizeof(argument_t));
+
+  if(start == NULL || filename == NULL){
+     fprintf(stderr, "Couldn't malloc memory for the parse tree.\n");
      exit(1);
   }
-  yydebug = 0;
+  filename->type = T_STRING;
+  filename->data.STRING = "standard input";
+  start->opcode = OP_START;
+  start->arguments = filename;
+  root = optree(start);
+  root->last = root; /* point to itself to start */
+  
+  yydebug = 0;	
   printf("Starting...\n");
   yyparse();
-  dumptree(root, 0);			
+  dumptree(root, 0);	
+  return 0;	
 }
 
 int yyerror(char *error)

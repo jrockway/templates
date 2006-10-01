@@ -1,11 +1,13 @@
 #include "tree.h"
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-inline void add_op(struct tree_t *tree, struct tree_t *new)
+inline void add_op(tree_t *tree, tree_t *new)
 {
   //  printf("adding an operation to the tree: %x <- %x\n", tree, new);
   if(tree == NULL){
-    printf("NULL ADDITION TO TREE\n");
+    printf("** ADDITION TO NULL TREE!!\n");
     return;
   }
   
@@ -15,10 +17,10 @@ inline void add_op(struct tree_t *tree, struct tree_t *new)
   tree->last = new;
 }
 
-inline struct operation_t *op_string(int opcode, char *string)
+inline operation_t *op_string(int opcode, char *string)
 {
-  struct argument_t  *a = malloc(sizeof(struct argument_t));
-  struct operation_t *o = malloc(sizeof(struct operation_t));
+  argument_t  *a = malloc(sizeof( argument_t));
+  operation_t *o = malloc(sizeof( operation_t));
   a->type = T_STRING;
   a->data.STRING = strdup(string); /* XXX: dup? */
   a->next = NULL;
@@ -27,34 +29,38 @@ inline struct operation_t *op_string(int opcode, char *string)
   return o;
 }
 
-struct tree_t *optree(struct operation_t *op)
+inline tree_t *optree(operation_t *op)
 {
-  struct tree_t *t = malloc(sizeof(struct tree_t));
+  tree_t *t = malloc(sizeof( tree_t));
   t->op = op;
   t->last = NULL;
   t->child = NULL;
   t->peer = NULL;
+  t->alter = NULL;
   return t;
 }
 
-void dumptree (struct tree_t *tree, int level)
+void dumptree (tree_t *tree, int level)
 {
   /* make sure you keep this sync'd with tree.h's defines */
-  const char *operations[10] = {"NULL","GET","SET","LITECHO","GET+ECHO",
-			       "LOOP","TEST","INCLUDE","WRAP","FILTER"};
+  const char *operations[12] = {"NOP","GET","SET","ECHO","!!",
+				"LOOP","BRANCH","INCLUDE","WRAP","FILTER",
+				"START", "BAIL"};
   char *indent = malloc(2*level+1);
   int i;
-  struct operation_t *op;
-  struct argument_t  *argument;
+  operation_t *op;
+  argument_t  *argument;
   type_t type;
 
-  for(i = 0; i < 2*level; i++) strncat(indent, "  ", 2*level-i);
+  for(i = 0; i < 2*level; i++) indent[i] = ' ';
+  indent[2*level] = '\0';
   
   while(tree != NULL){
     /* print opcode */
     op = tree->op;
     if(op != NULL){
-      printf("%sOP: %s (%d)\n", indent, operations[op->opcode], op->opcode);
+      printf("%sOP: %s (%d) at 0x%x\n", 
+	     indent, operations[op->opcode], op->opcode, tree);
       
       /* print arguments */
       argument = op->arguments;
