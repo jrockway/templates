@@ -158,6 +158,22 @@ tree_t *loop(tree_t *condition, tree_t *action)
 }
 tree_t *assign_loop(char *sink, char *source, tree_t *action)
 {
-  return action;
+  argument_t *src = argument();
+  src->data.STRING = strdup(source); /* XXXXX actual operator */
+  src->type = T_STRING;
+
+  argument_t *snk = argument();
+  snk->data.STRING = strdup(sink); /* XXXXX actual operator */
+  snk->type = T_STRING;
+  src->next = snk;
+  
+  operation_t *op = malloc(sizeof(operation_t));
+  op->opcode    = OP_LOOP;
+  op->arguments = src;
+  
+  tree_t *loop = optree(op);
+  loop->R_ACTION  = action;
+  
+  return loop;
 }
 

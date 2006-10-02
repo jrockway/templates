@@ -26,7 +26,7 @@ tree_t *result;
 %token <string> ELSIF "elsif statement";
 %token <string> LOOP "loop statement";
 %token <string> E "%]";
-%token ASSIGN
+%token ASSIGN;
 %token COMMAND "command"; /* indicates start of command */
 %token FILTER_OP "|";
 %token FILE_END 0 "end of file"

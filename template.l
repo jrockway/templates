@@ -30,7 +30,9 @@
  WRAP		      	 STR; TT_TOK(BDIRECTIVE);
  			      /* other directives */
  [A-Z]+			 STR; TT_TOK(DIRECTIVE);
- [<>=] 		      	 STR; TT_TOK(OPERATOR);
+ [<>] 		      	 STR; TT_TOK(OPERATOR);
+ =                       TT_TOK(ASSIGN);
+ ==                      STR TT_TOK(OPERATOR);
  [^[:space:]|\]\[%]+  	 STR; TT_TOK(IDENTIFIER);
  [[:space:]]+	      /* nothing */;
  \|                   	 TT_TOK(FILTER_OP);
