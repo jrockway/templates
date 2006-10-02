@@ -5,7 +5,7 @@
 
 inline void add_op(tree_t *tree, tree_t *new)
 {
-  //  printf("adding an operation to the tree: %x <- %x\n", tree, new);
+  //  printf("adding an operation to the tree: t0x%x <- t0x%x\n", tree, new);
   if(tree == NULL){
     printf("** ADDITION TO NULL TREE!!\n");
     return;
@@ -29,23 +29,68 @@ inline operation_t *op_string(int opcode, char *string)
   return o;
 }
 
+inline argument_t *argument()
+{
+  argument_t *a = malloc(sizeof(argument_t));
+  a->type = T_NULL;
+  a->data.INT = 0;
+  a->next = NULL;
+  return a;
+}
+
+
 inline tree_t *optree(operation_t *op)
 {
   tree_t *t = malloc(sizeof( tree_t));
   t->op = op;
-  t->last = NULL;
+  t->last = t;
   t->child = NULL;
   t->peer = NULL;
   t->alter = NULL;
+  t->cond = NULL;
   return t;
+}
+
+void _destroy_op(operation_t *op)
+{
+  op->opcode = 0;
+  argument_t *a = op->arguments;
+  while(a != NULL)
+    {
+      argument_t *next = a->next;
+      if( a->data.STRING != NULL && 
+	 (a->type == T_STRING || a->type == T_SYMBOL))
+	{
+	  free(a->data.STRING);
+	}
+      
+      free(a);
+      a = next;
+    }
+  
+  free(op);
+  
+}
+
+void destroy(tree_t *tree)
+{
+  if (tree == NULL)  return;
+  destroy(tree->cond);
+  destroy(tree->child);
+  destroy(tree->alter);
+  destroy(tree->peer);
+  _destroy_op(tree->op);
+  free(tree);
 }
 
 void dumptree (tree_t *tree, int level)
 {
+  if (level > 50) return;
+  
   /* make sure you keep this sync'd with tree.h's defines */
-  const char *operations[12] = {"NOP","GET","SET","ECHO","!!",
+  const char *operations[13] = {"NOP","GET","SET","ECHO","!!",
 				"LOOP","BRANCH","INCLUDE","WRAP","FILTER",
-				"START", "BAIL"};
+				"START", "BAIL", "EXPR"};
   char *indent = malloc(2*level+1);
   int i;
   operation_t *op;
@@ -59,27 +104,32 @@ void dumptree (tree_t *tree, int level)
     /* print opcode */
     op = tree->op;
     if(op != NULL){
-      printf("%sOP: %s (%d) at 0x%x\n", 
+      printf("%sOP: %s (%d) at t0x%x\n", 
 	     indent, operations[op->opcode], op->opcode, tree);
       
       /* print arguments */
       argument = op->arguments;
       while(argument != NULL){
-	if(argument->type == T_STRING){
-	  printf("%s ARG: <STRING> ``%s''\n", indent, argument->data.STRING);
-	}
-	else if(argument->type == T_INT){
-	  printf("%s ARG: <INT>%d\n", indent, argument->data.INT);
-	}
-	else if(argument->type == T_DOUBLE){
-	  printf("%s ARG: <DOUBLE>%f\n", indent, argument->data.DOUBLE);
-	}
-	else if(argument->type == T_VOID){
-	  printf("%s ARG: <VOID>\n", indent);
-	}
-	else {
-	  printf("%s ARG: [NULL]\n", indent);
-	}
+	switch (argument->type)
+	  {
+	  case T_STRING:
+	    printf("%s ARG: <STRING> ``%s''\n", indent, argument->data.STRING);
+	    break;
+	  case T_SYMBOL:
+	    printf("%s ARG: <SYMBOL> ``%s''\n", indent, argument->data.STRING);
+	    break;
+	  case T_INT:
+	    printf("%s ARG: <INT>%d\n", indent, argument->data.INT);
+	    break;
+	  case T_DOUBLE:
+	    printf("%s ARG: <DOUBLE>%f\n", indent, argument->data.DOUBLE);
+	    break;
+	  case T_VOID:
+	    printf("%s ARG: <VOID>\n", indent);
+	    break;
+	  default:
+	    printf("%s ARG: [NULL]\n", indent);
+	  }
 	argument = argument->next;
       }
     }
@@ -87,9 +137,32 @@ void dumptree (tree_t *tree, int level)
     else {
       printf("%sOP: NULL (NULL)\n", indent);
     }
-    
-    /* recurse to next child */
-    dumptree(tree->child, level + 1);
+
+    /* special opcodes */
+    switch(op->opcode)
+      {
+      case OP_BRANCH:
+	/* branch */
+	printf("%s COND: t0x%x\n", indent, tree->R_COND);
+	dumptree(tree->R_COND, level + 1);
+	printf("%s TRUE: t0x%x\n", indent, tree->R_TRUE);
+	dumptree(tree->R_TRUE, level + 2);
+	printf("%s FALSE: t0x%x\n", indent, tree->R_FALSE);
+	dumptree(tree->R_FALSE, level + 2);
+	break;
+      case OP_EXPR:
+	/* expression */
+	printf("%s LHS: t0x%x\n", indent, tree->R_LHS);
+	dumptree(tree->R_LHS, level + 2);
+	printf("%s RHS: t0x%x\n", indent, tree->R_RHS);
+	dumptree(tree->R_RHS, level + 2);
+	break;
+
+      default:
+	/* everything else */
+	dumptree(tree->child, level + 1);
+	break;
+      }
     
     /* iterate to next peer */
     tree = tree->peer;

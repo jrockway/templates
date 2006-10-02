@@ -3,8 +3,9 @@
 #include <stdlib.h>
 #include "tree.h"
 #include "directives.h"
+#include <string.h>
   
-tree_t *root;
+tree_t *result;
 %}
 
 %union {
@@ -12,32 +13,55 @@ tree_t *root;
    struct tree_t *tree;
    char *string;
 };
-
-%token <string> DIRECTIVE;
-%token <string> IDENTIFIER;
-%token <string> DATA;
-%token <string> END_TOK;
-%token <string> BDIRECTIVE;
-%token <string> E;
-%token COMMAND; /* indicates start of command */
-%token FILTER_OP;
+%error-verbose
+%token <string> DIRECTIVE "inline directive"; 
+%token <string> BDIRECTIVE "block directive";
+%token <string> IDENTIFIER "identifier";
+%token <string> OPERATOR "operator";
+%token <string> DATA "text";
+%token <string> END "[% END %] tag";
+%token <string> IF "if statement";
+%token <string> ELSE "else statement";
+%token <string> LOOP "loop statement";
+%token <string> E "%]";
+%token COMMAND "command"; /* indicates start of command */
+%token FILTER_OP "|";
+%token FILE_END 0 "end of file"
 %type <tree> filter 
 %type <tree> block
 %type <tree> commands
+%type <tree> expr
+%type <string> error
+
 %%
 
-commands:		      {  }
-	| commands block      { $1; if($2 != NULL) add_op(root, $2) }
+commands:		      {  $$ = NULL }
+	| commands block      {  if($1 != NULL){
+				    add_op($1, $2);
+				    result = $1;
+				    $$ = $1;
+				} else {
+				  result = $2;
+				  $$ = $2;
+				}
+			      }
         ;
+
+expr:    IDENTIFIER                    { $$ = identifier($1); }
+       | expr OPERATOR expr            { $$ = expr($1, $2, $3) }
 
 block:   DATA			      { $$ = optree(op_string(OP_ECHO, $1));};
        | filter E	      	      { $$ = echo_tree($1); }
-       | IDENTIFIER E          	      { $$ = bare_identifier($1) }
+       | IDENTIFIER E          	      { $$ = echo_tree(identifier($1)) }
        | DIRECTIVE IDENTIFIER E	      { $$ = identifier_directive($1, $2) }
-       | DIRECTIVE E           	      { $$ = bare_identifier($1) /* ? */ }
-       | BDIRECTIVE IDENTIFIER E block END_TOK E
+       | DIRECTIVE E           	      { $$ = echo_tree(identifier($1)) /* ? */ }
+       | LOOP expr E commands END E   { $$ = NULL; printf("loop\n"); }
+       | IF expr E commands END E     { $$ = if_then($2, $4, NULL); }
+       | IF expr E commands ELSE E commands END E
+       	    	   	      	      { $$ = if_then($2, $4, $7);}
+       | BDIRECTIVE IDENTIFIER E commands END E
        	 	 	   	      { $$ = NULL; printf("a block!\n") }
-       | BDIRECTIVE E block END_TOK E { $$ = NULL; printf("a block!\n") }
+       | BDIRECTIVE E block END E     { $$ = NULL; printf("a block!\n") }
        ;
 
 filter: IDENTIFIER FILTER_OP IDENTIFIER 
@@ -53,27 +77,30 @@ filter: IDENTIFIER FILTER_OP IDENTIFIER
 int main (int argc, char **argv)
 {
   operation_t *start = malloc(sizeof(operation_t));
-  argument_t *filename = malloc(sizeof(argument_t));
+  argument_t *filename = argument();
 
   if(start == NULL || filename == NULL){
      fprintf(stderr, "Couldn't malloc memory for the parse tree.\n");
      exit(1);
   }
   filename->type = T_STRING;
-  filename->data.STRING = "standard input";
+  filename->data.STRING = strdup("standard input");
   start->opcode = OP_START;
   start->arguments = filename;
-  root = optree(start);
+  tree_t *root = optree(start);
   root->last = root; /* point to itself to start */
   
-  yydebug = 1;	
+  yydebug = argc-1;	
   printf("Starting...\n");
   yyparse();
-  dumptree(root, 0);	
+  add_op(root, result);
+  dumptree(root, 0);
+  destroy(root);	
   return 0;	
 }
 
 int yyerror(char *error)
 {
-  fprintf(stderr, "error: %s\n*** Stop.\n", error);
+  fprintf(stderr, "fatal error: %s\n", error);
+  exit(1);
 }

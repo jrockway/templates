@@ -3,40 +3,39 @@
 #include <string.h>
 #include "template.tab.h"
 #define TT_TOK(a) return a
-#define STR yylval.string = (char *) strdup(yytext)
-%}
+#define STR yylval.string = strdup(yytext);
+%}     
+
+%option   8bit 
 %x data
 %x command
 %x comment
 %%
 
 <data,INITIAL>{
- \[%#		BEGIN(comment);
- \[%		BEGIN(command);
-
- \\\[%	        yylval.string="[%"; TT_TOK(DATA);
- ([^\\\[]|\n)+	STR; TT_TOK(DATA); 
- \[[^%]		STR; TT_TOK(DATA);
+ \[%#			 BEGIN(comment);
+ \[%			 BEGIN(command);
+ \\\[%			 yylval.string="[%"; TT_TOK(DATA);
+ ([^\\\[]|\n)+		 STR; TT_TOK(DATA);  /* everything */
+ \\[^[]?[^%]?		 STR; TT_TOK(DATA); /* don't eat all \s */
 }
                  /* parse inside directives [% ... %] */
 <command>{
- END                  yylval.string=""; TT_TOK(END_TOK);
- /* directives that have a following [% END %] */
- IF		      STR; TT_TOK(BDIRECTIVE);
- ELSE		      STR; TT_TOK(BDIRECTIVE);
- ELSIF		      STR; TT_TOK(BDIRECTIVE);
- LOOP		      STR; TT_TOK(BDIRECTIVE);
- WRAP		      STR; TT_TOK(BDIRECTIVE);
- /* other directives */
- [A-Z]+		      STR; TT_TOK(DIRECTIVE);
- [^[:space:]|\]\[%]+  STR; TT_TOK(IDENTIFIER);
+ END			 TT_TOK(END);
+			       /* directives that end w/ [% END %] */
+ IF		      	 TT_TOK(IF);
+ ELSE		      	 TT_TOK(ELSE);
+ /* ELSIF	      	 STR; TT_TOK(BDIRECTIVE);*/
+ LOOP		      	 TT_TOK(LOOP);
+ WRAP		      	 STR; TT_TOK(BDIRECTIVE);
+ 			      /* other directives */
+ [A-Z]+			 STR; TT_TOK(DIRECTIVE);
+ [<>=] 		      	 STR; TT_TOK(OPERATOR);
+ [^[:space:]|\]\[%]+  	 STR; TT_TOK(IDENTIFIER);
  [[:space:]]+	      /* nothing */;
- \|                   TT_TOK(FILTER_OP);
+ \|                   	 TT_TOK(FILTER_OP);
+ %]\n? 		      	 BEGIN(data); TT_TOK(E);
 }
-<comment,command>%]\n? BEGIN(data); TT_TOK(E);
 
 <comment>[^%]*	      /* ignore */;
-%%
-
-
-
+<comment>%]\n?        BEGIN(data);
