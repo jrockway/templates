@@ -79,6 +79,8 @@ struct tree_t {
 #define R_TRUE child
 #define R_FALSE alter
 #define R_COND cond
+#define R_ACTION child
+
 
 typedef struct tree_t tree_t;
 /* print out the parse tree */

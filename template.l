@@ -25,7 +25,7 @@
 			       /* directives that end w/ [% END %] */
  IF		      	 TT_TOK(IF);
  ELSE		      	 TT_TOK(ELSE);
- /* ELSIF	      	 STR; TT_TOK(BDIRECTIVE);*/
+ ELSIF	      	 	 TT_TOK(ELSIF);
  LOOP		      	 TT_TOK(LOOP);
  WRAP		      	 STR; TT_TOK(BDIRECTIVE);
  			      /* other directives */

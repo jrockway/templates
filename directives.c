@@ -143,3 +143,21 @@ tree_t *if_then(tree_t *condition, tree_t *true, tree_t *false)
   
   return br;
 }
+
+tree_t *loop(tree_t *condition, tree_t *action)
+{
+  operation_t *op = malloc(sizeof(operation_t));
+  op->opcode    = OP_LOOP;
+  op->arguments = NULL;
+  
+  tree_t *loop = optree(op);
+  loop->R_COND  = condition;
+  loop->R_ACTION  = action;
+
+  return loop;
+}
+tree_t *assign_loop(char *sink, char *source, tree_t *action)
+{
+  return action;
+}
+

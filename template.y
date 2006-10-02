@@ -13,6 +13,7 @@ tree_t *result;
    struct tree_t *tree;
    char *string;
 };
+%expect 1
 %error-verbose
 %token <string> DIRECTIVE "inline directive"; 
 %token <string> BDIRECTIVE "block directive";
@@ -22,13 +23,16 @@ tree_t *result;
 %token <string> END "[% END %] tag";
 %token <string> IF "if statement";
 %token <string> ELSE "else statement";
+%token <string> ELSIF "elsif statement";
 %token <string> LOOP "loop statement";
 %token <string> E "%]";
+%token ASSIGN
 %token COMMAND "command"; /* indicates start of command */
 %token FILTER_OP "|";
 %token FILE_END 0 "end of file"
 %type <tree> filter 
 %type <tree> block
+%type <tree> else
 %type <tree> commands
 %type <tree> expr
 %type <string> error
@@ -36,15 +40,10 @@ tree_t *result;
 %%
 
 commands:		      {  $$ = NULL }
-	| commands block      {  if($1 != NULL){
-				    add_op($1, $2);
-				    result = $1;
-				    $$ = $1;
-				} else {
-				  result = $2;
-				  $$ = $2;
-				}
-			      }
+	| commands block      {  if($1 != NULL){ 
+	  	   	      	    add_op($1, $2);
+				    result = $1; $$ = $1;
+				} else { result = $2; $$ = $2;} }
         ;
 
 expr:    IDENTIFIER                    { $$ = identifier($1); }
@@ -55,20 +54,27 @@ block:   DATA			      { $$ = optree(op_string(OP_ECHO, $1));};
        | IDENTIFIER E          	      { $$ = echo_tree(identifier($1)) }
        | DIRECTIVE IDENTIFIER E	      { $$ = identifier_directive($1, $2) }
        | DIRECTIVE E           	      { $$ = echo_tree(identifier($1)) /* ? */ }
-       | LOOP expr E commands END E   { $$ = NULL; printf("loop\n"); }
+       | LOOP expr E commands END E   { $$ = loop($2, $4) }
+       | LOOP IDENTIFIER ASSIGN IDENTIFIER E commands END E
+       	      		 	      { $$ = assign_loop($2, $4, $6); }
        | IF expr E commands END E     { $$ = if_then($2, $4, NULL); }
-       | IF expr E commands ELSE E commands END E
-       	    	   	      	      { $$ = if_then($2, $4, $7);}
+       | IF expr E commands else
+       	    	   	      	      { $$ = if_then($2, $4, $5);}
        | BDIRECTIVE IDENTIFIER E commands END E
        	 	 	   	      { $$ = NULL; printf("a block!\n") }
        | BDIRECTIVE E block END E     { $$ = NULL; printf("a block!\n") }
        ;
+else:    ELSIF expr E commands END E  { $$ = if_then($2, $4, NULL); } 
+       | ELSIF expr E commands else END E  
+       	       	      	       	      { $$ = if_then($2, $4, $5); }
+       | ELSE E commands END E        { $$ = $3; }
+       ;
 
 filter: IDENTIFIER FILTER_OP IDENTIFIER 
 			      /* plain [% something | filter %] */
-		   	      { $$ = identifier_filter($1, $3); }
+		   	      	      { $$ = identifier_filter($1, $3); }
       | filter FILTER_OP IDENTIFIER /* chained filters */
-               		      { $$ = chained_filter($1, $3); }
+               		      	      { $$ = chained_filter($1, $3); }
       ;
 
 

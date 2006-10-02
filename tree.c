@@ -149,6 +149,13 @@ void dumptree (tree_t *tree, int level)
 	dumptree(tree->R_TRUE, level + 2);
 	printf("%s FALSE: t0x%x\n", indent, tree->R_FALSE);
 	dumptree(tree->R_FALSE, level + 2);
+	break;     
+      case OP_LOOP:
+	/* loop */
+	printf("%s COND: t0x%x\n", indent, tree->R_COND);
+	dumptree(tree->R_COND, level + 1);
+	printf("%s ACTION: t0x%x\n", indent, tree->R_TRUE);
+	dumptree(tree->R_ACTION, level + 2);
 	break;
       case OP_EXPR:
 	/* expression */
