@@ -1,0 +1,20 @@
+[%# test out math/compare operations %]
+
+[%# basics %]
+[% IF a == b %] a == b [% ELSIF a < b %] a < b [% ELSIF a > b %] a > b [% ELSE %] ??? [% END %]
+[% IF a %] a is true [% ELSIF a IS 0 %] a == 0 [% END %]
+
+[%# AND OR && || %]
+[% IF a == b AND b == c %] a == b == c [% END %]
+[% IF a == b &&  b == c %]  the  same  [% END %]
+[% IF a == b OR  b == c %] a == b or b == c [% END %]
+[% IF a == b ||  b == c %]  the  same [% END %]
+
+[%# combined less/more && equals %]
+[% IF a <= b && a >= c %] that long thing [% END %]
+
+[%# set %]
+[% SET a = a + 1 %]
+[% SET b = a + b %]
+[% SET a++ %]
+[% SET b-- %]

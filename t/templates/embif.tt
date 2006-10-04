@@ -1,0 +1,21 @@
+
+** BEFORE **
+
+    [% IF hello %]
+
+         TRUE 
+
+         [% IF world %]
+	      TRUE TRUE
+           [% ELSIF foobar %]
+	      TRUE FALSE TRUE
+           [% ELSE %]
+	      TRUE FALSE FALSE
+         [% END %]
+
+       [% ELSIF world %]
+       	  TRUE [world] TRUE
+
+     [% END %] 
+
+** AFTER **

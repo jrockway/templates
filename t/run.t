@@ -10,8 +10,10 @@ my $executable = "$Bin/../template";
 
 plan tests => 2*scalar @templates;
 
+close *STDERR if !$ENV{VERBOSE};
+
 foreach my $template (@templates){
     $output = `$executable < $template`;
-    ok($output);
-    ok($? == 0, 'no errors');
+    ok($output, "got something back from $template");
+    ok($? == 0, "no syntax errors processing $template");
 }

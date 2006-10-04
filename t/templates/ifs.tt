@@ -1,0 +1,25 @@
+[% IF foo %]
+   foo is true
+   [% IF bar %]
+   foo and bar are true
+   [% ELSIF baz %]
+   foo and baz are true, bar is false
+     [% IF hello %]
+       hello
+         [% IF world %]
+       	      hello world
+           [% ELSIF foobar %]
+       	      hello foobar
+           [% ELSE %]
+       	      hello !world && !foobar
+         [% END %]
+       [% ELSIF world %]
+         world only
+     [% END %] [%# no else %]
+   
+     [% ELSE %]
+   even I don't know what this means
+   [% END %]
+[% ELSE %]
+   foo is not true!
+[% END %]
