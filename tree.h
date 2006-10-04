@@ -16,9 +16,8 @@ typedef int type_t;
 struct argument_t {
   type_t type;
   union {
-    char  *STRING;
-    int    INT;
-    double DOUBLE;
+    char  *string;
+    int    number;
   } data;
   struct argument_t *next;
 };
@@ -52,15 +51,19 @@ typedef struct operation_t operation_t;
  
 /* keep sync'd with dumptree */
 /* condition opcodes for OP_EXPR's argument */
-#define COP_EQUV 0      /* lhs == rhs */
-#define COP_LESS 1      /* lhs <  rhs */
-#define COP_MORE 2      /* lhs >  rhs */
-#define COP_LTEQ 3      /* lhs <= rhs */
-#define COP_GTEQ 4      /* lhs >= rhs */
-#define COP_TRUE 5      /* lhs */
-#define COP_NOT  6      /* !lhs */
-#define COP_OR   7      /* lhs || rhs */
-#define COP_AND  8      /* lhs && rhs */
+/* X here is for eXpression. E_ seems like an error E_NOERROR */
+#define X_EQ   0      /* lhs == rhs */
+#define X_LT   1      /* lhs <  rhs */
+#define X_GT   2      /* lhs >  rhs */
+#define X_LTEQ 3      /* lhs <= rhs */
+#define X_GTEQ 4      /* lhs >= rhs */
+#define X_TRUE 5      /* lhs */
+#define X_NOT  6      /* !lhs */
+#define X_OR   7      /* lhs || rhs */
+#define X_AND  8      /* lhs && rhs */
+#define X_ADD  9      /* lhs + rhs */
+#define X_SUB  10     /* lhs - rhs */
+
 
 /* if you add anything here, make sure to adjust destroy() and
    dumptree() */
@@ -80,7 +83,7 @@ struct tree_t {
 #define R_FALSE alter
 #define R_COND cond
 #define R_ACTION child
-
+#define R_EXPR child
 
 typedef struct tree_t tree_t;
 /* print out the parse tree */

@@ -7,11 +7,11 @@
 tree_t *error(char *message, int line)
 {
   argument_t *err = argument();
-  err->data.STRING = strdup(message);
+  err->data.string = strdup(message);
   err->type = T_STRING;
   
   argument_t *lin = argument();
-  lin->data.INT = line;
+  lin->data.number = line;
   lin->type = T_INT;
   err->next = lin;
   
@@ -30,7 +30,7 @@ tree_t *error(char *message, int line)
 tree_t *identifier_directive(char *directive, char *identifier)
 {
   argument_t *idf = argument();
-  idf->data.STRING = strdup(identifier);
+  idf->data.string = strdup(identifier);
   idf->type = T_SYMBOL;
 
   operation_t *op = malloc(sizeof(operation_t));
@@ -51,11 +51,11 @@ tree_t *identifier_directive(char *directive, char *identifier)
 tree_t *identifier_filter(char *identifier, char *filter)
 {
   argument_t *fname = argument();
-  fname->data.STRING = strdup(filter);
+  fname->data.string = strdup(filter);
   fname->type = T_STRING;
 
   argument_t *iname = argument();
-  iname->data.STRING = strdup(identifier);
+  iname->data.string = strdup(identifier);
   iname->type = T_SYMBOL;
   
   operation_t *get = malloc(sizeof(operation_t));
@@ -74,7 +74,7 @@ tree_t *identifier_filter(char *identifier, char *filter)
 tree_t *chained_filter(tree_t *child_filter, char *filter)
 {
   argument_t *fname = argument();
-  fname->data.STRING = strdup(filter);
+  fname->data.string = strdup(filter);
   fname->type = T_STRING;
 
   operation_t *fo = malloc(sizeof(operation_t));
@@ -90,7 +90,7 @@ tree_t *chained_filter(tree_t *child_filter, char *filter)
 tree_t *identifier(char *identifier)
 {
   argument_t *f = argument();
-  f->data.STRING = identifier;
+  f->data.string = identifier;
   f->type = T_SYMBOL;
 
   operation_t *get = malloc(sizeof(operation_t));
@@ -112,11 +112,11 @@ tree_t *echo_tree(tree_t *tree)
   return new_tree;
 }
 
-tree_t *expr(tree_t *left, char *operator, tree_t *right)
+tree_t *expr(tree_t *left, int operator, tree_t *right)
 {
   argument_t *o = argument();
-  o->data.STRING = strdup(operator); /* XXXXX actual operator */
-  o->type = T_STRING;
+  o->data.number = operator;
+  o->type = T_INT;
   
   operation_t *op = malloc(sizeof(operation_t));
   op->opcode    = OP_EXPR;
@@ -159,11 +159,11 @@ tree_t *loop(tree_t *condition, tree_t *action)
 tree_t *assign_loop(char *sink, char *source, tree_t *action)
 {
   argument_t *src = argument();
-  src->data.STRING = strdup(source); /* XXXXX actual operator */
+  src->data.string = strdup(source); /* XXXXX actual operator */
   src->type = T_STRING;
 
   argument_t *snk = argument();
-  snk->data.STRING = strdup(sink); /* XXXXX actual operator */
+  snk->data.string = strdup(sink); /* XXXXX actual operator */
   snk->type = T_STRING;
   src->next = snk;
   
@@ -177,3 +177,55 @@ tree_t *assign_loop(char *sink, char *source, tree_t *action)
   return loop;
 }
 
+tree_t *set(char *symbol, tree_t *value){
+  argument_t *symname = argument();
+  symname->type = T_SYMBOL;
+  symname->data.string = strdup(symbol);
+  
+  operation_t *op = malloc(sizeof(operation_t));
+  op->opcode    = OP_SET;
+  op->arguments = symname;
+ 
+  tree_t *result = optree(op);
+  result->R_EXPR = value;
+  
+  return result;
+}
+
+  
+/* first must be a "get string" op! */
+tree_t *string(tree_t *a, char *b)
+{
+  tree_t *result;
+  
+  if(a == NULL)
+    {
+      /* create a new string */
+      argument_t *s = argument();
+      s->type = T_STRING;
+      s->data.string = strdup(b);
+      
+      operation_t *op = malloc(sizeof(operation_t));
+      op->opcode = OP_GET;
+      op->arguments = s;
+      
+      result = optree(op);
+    }
+  else
+    {
+      // blow up catch on fire, i hope this is really a T_STRING!
+      char *start = a->op->arguments->data.string;
+      int size = strlen(start) + strlen(b);
+      
+      char *str = malloc(size * sizeof(char));
+      if (str == NULL) return NULL;
+      strncpy(str, start, size);
+      strncat(str, b, size-strlen(start));
+      str[size-1] = '\000'; /* i wish strl* were portable */
+      
+      a->op->arguments->data.string = str;
+      result = a;
+    }
+  
+  return result;
+}

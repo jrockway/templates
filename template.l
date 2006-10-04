@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "template.tab.h"
-#define TT_TOK(a) return a
+#define TOK(a) return a
 #define STR yylval.string = strdup(yytext);
 %}     
 
@@ -10,37 +10,63 @@
 %x data
 %x command
 %x comment
+%x qq_string
+%x q_string
 %%
 
 <data,INITIAL>{
  \[%#			 BEGIN(comment);
  \[%			 BEGIN(command);
- \\\[%			 yylval.string="[%"; TT_TOK(DATA);
- ([^\\\[]|\n)+		 STR; TT_TOK(DATA);  /* everything */
- \\[^[]?[^%]?		 STR; TT_TOK(DATA); /* don't eat all \s */
+ \\\[%			 yylval.string="[%"; TOK(DATA);
+ ([^\\\[]|\n)+		 STR; TOK(DATA);  /* everything */
+ \\[^[]?[^%]?		 STR; TOK(DATA); /* don't eat all \s */
 }
                  /* parse inside directives [% ... %] */
 <command>{
- END			 TT_TOK(END);
-			       /* directives that end w/ [% END %] */
- IF		      	 TT_TOK(IF);
- SET			 TT_TOK(SET);
- ELSE		      	 TT_TOK(ELSE);
- ELSIF	      	 	 TT_TOK(ELSIF);
- LOOP		      	 TT_TOK(LOOP);
- WRAP		      	 STR; TT_TOK(BDIRECTIVE);
- 			      /* other directives */
- [A-Z]+			 STR; TT_TOK(DIRECTIVE);
- [<>+-]		      	 STR; TT_TOK(OPERATOR);
- =                       TT_TOK(ASSIGN);
- ==                      STR; TT_TOK(OPERATOR);
- AND			 STR; TT_TOK(OPERATOR);
- OR			 STR; TT_TOK(OPERATOR);
- [^[:space:]|\]\[%]+  	 STR; TT_TOK(IDENTIFIER);
+ END			 TOK(END);
+			 /* directives that end w/ [% END %] */
+ IF		      	 TOK(IF);
+ SET			 TOK(SET);
+ ELSE		      	 TOK(ELSE);
+ ELSIF	      	 	 TOK(ELSIF);
+ LOOP		      	 TOK(LOOP);
+ WRAP		      	 TOK(WRAP);
+
+	 /* operators */
+ =                       TOK(ASSIGN);
+
+ IS			 TOK(EQ);
+ ==                      TOK(EQ);
+ AND			 TOK(AND);
+ OR			 TOK(OR);
+ &&			 TOK(AND);
+ \|\|			 TOK(OR);
+ \+\+			 TOK(INC);
+ --			 TOK(DEC);
+ \+			 TOK(ADD);
+ -			 TOK(SUB);
+ \<=			 TOK(LTEQ);
+ \>=   			 TOK(GTEQ);
+ \<			 TOK(LT);
+ \>			 TOK(GT);
+
+        /* strings */
+ ["]			 BEGIN(qq_string); 
+ [']                     BEGIN(q_string);
+
+	/* other directives */
+ [A-Z]+			 STR; TOK(DIRECTIVE);
+ [^[:space:]|\]\[%]+  	 STR; TOK(IDENTIFIER);
  [[:space:]]+	      /* nothing */;
- \|                   	 TT_TOK(FILTER_OP);
- %]\n? 		      	 BEGIN(data); TT_TOK(E);
+ \|                   	 TOK(FILTER_OP);
+ %]\n? 		      	 BEGIN(data); TOK(E);
 }
+
+<q_string>[^"]+		 STR; TOK(STRING);
+<q_string>[^\]["] 	 BEGIN(command);
+<qq_string>[^']+	 STR; TOK(STRING);
+<qq_string>[^\]['] 	 BEGIN(command);
+
 
 <comment>[^%]*	      /* ignore */;
 <comment>%]\n?        BEGIN(data);

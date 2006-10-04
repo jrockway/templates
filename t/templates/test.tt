@@ -5,7 +5,7 @@
   This is some text.  Blah, blah, blah.
 
   [% IF something IS true %]
-     [% WHILE foo = bar %]
+     [% LOOP foo = bar %]
 	Foo is still bar.
      [% END %]
   [% ELSIF something IS false %]
@@ -14,7 +14,7 @@
      Tristate!     
   [% END %]
 
-  [% LOOP OVER foo AS bar %]
+  [% LOOP foo = bar %]
      This is [% bar %] inside [% foo %].
   [% END %]
 

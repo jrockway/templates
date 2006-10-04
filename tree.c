@@ -22,7 +22,7 @@ inline operation_t *op_string(int opcode, char *string)
   argument_t  *a = malloc(sizeof( argument_t));
   operation_t *o = malloc(sizeof( operation_t));
   a->type = T_STRING;
-  a->data.STRING = strdup(string); /* XXX: dup? */
+  a->data.string = strdup(string); /* XXX: dup? */
   a->next = NULL;
   o->opcode = opcode;
   o->arguments = a;
@@ -33,7 +33,7 @@ inline argument_t *argument()
 {
   argument_t *a = malloc(sizeof(argument_t));
   a->type = T_NULL;
-  a->data.INT = 0;
+  a->data.number = 0;
   a->next = NULL;
   return a;
 }
@@ -58,10 +58,10 @@ void _destroy_op(operation_t *op)
   while(a != NULL)
     {
       argument_t *next = a->next;
-      if( a->data.STRING != NULL && 
+      if( a->data.string != NULL && 
 	 (a->type == T_STRING || a->type == T_SYMBOL))
 	{
-	  free(a->data.STRING);
+	  free(a->data.string);
 	}
       
       free(a);
@@ -85,7 +85,7 @@ void destroy(tree_t *tree)
 
 void dumptree (tree_t *tree, int level)
 {
-  if (level > 50) return;
+  if (level > 50) return; /* no point in overflowing the stack / terminal*/
   
   /* make sure you keep this sync'd with tree.h's defines */
   const char *operations[13] = {"NOP","GET","SET","ECHO","!!",
@@ -113,16 +113,13 @@ void dumptree (tree_t *tree, int level)
 	switch (argument->type)
 	  {
 	  case T_STRING:
-	    printf("%s ARG: <STRING> ``%s''\n", indent, argument->data.STRING);
+	    printf("%s ARG: <STRING> ``%s''\n", indent, argument->data.string);
 	    break;
 	  case T_SYMBOL:
-	    printf("%s ARG: <SYMBOL> ``%s''\n", indent, argument->data.STRING);
+	    printf("%s ARG: <SYMBOL> ``%s''\n", indent, argument->data.string);
 	    break;
 	  case T_INT:
-	    printf("%s ARG: <INT>%d\n", indent, argument->data.INT);
-	    break;
-	  case T_DOUBLE:
-	    printf("%s ARG: <DOUBLE>%f\n", indent, argument->data.DOUBLE);
+	    printf("%s ARG: <INT>%d\n", indent, argument->data.number);
 	    break;
 	  case T_VOID:
 	    printf("%s ARG: <VOID>\n", indent);
@@ -141,6 +138,10 @@ void dumptree (tree_t *tree, int level)
     /* special opcodes */
     switch(op->opcode)
       {
+      case OP_SET:
+	printf("%s TO: t0x%x\n", indent, tree->R_EXPR);
+	dumptree(tree->R_EXPR, level + 1);
+	break;
       case OP_BRANCH:
 	/* branch */
 	printf("%s COND: t0x%x\n", indent, tree->R_COND);
