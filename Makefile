@@ -18,6 +18,11 @@ directives.o: directives.c directives.h tree.h
 template: lex.yy.c template.tab.c tree.o directives.o
 	cc -o template tree.o directives.o lex.yy.c template.tab.c -lfl -g3
 
+.PHONY: test
+
+test: template
+	prove t/*
+
 clean:
 	rm -f template
 	rm -f template.exe
