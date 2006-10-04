@@ -1,8 +1,9 @@
 [%# this will print out TAP when run %]
 
 [% SET tests = 10 %]
-[% SET count = 0  %]
+[% SET count = 1  %]
 
+[% count %]..[% tests %]
 [% LOOP count < tests %]
 ok [% count %] - we made it to iteration [% count %] of [% tests %]
 [% SET count++ %]
