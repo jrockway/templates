@@ -25,6 +25,7 @@ tree_t *result;
 %token <string> ELSE "else statement";
 %token <string> ELSIF "elsif statement";
 %token <string> LOOP "loop statement";
+%token <string> SET "set statement";
 %token <string> E "%]";
 %token ASSIGN;
 %token COMMAND "command"; /* indicates start of command */
@@ -54,6 +55,8 @@ block:   DATA			      { $$ = optree(op_string(OP_ECHO, $1));};
        | IDENTIFIER E          	      { $$ = echo_tree(identifier($1)) }
        | DIRECTIVE IDENTIFIER E	      { $$ = identifier_directive($1, $2) }
        | DIRECTIVE E           	      { $$ = echo_tree(identifier($1)) /* ? */ }
+       | IDENTIFIER ASSIGN expr E     { $$ = NULL; printf("SET\n"); }
+       | SET IDENTIFIER ASSIGN expr E { $$ = NULL; printf("REALSET\n"); }
        | LOOP expr E commands END E   { $$ = loop($2, $4) }
        | LOOP IDENTIFIER ASSIGN IDENTIFIER E commands END E
        	      		 	      { $$ = assign_loop($2, $4, $6); }
